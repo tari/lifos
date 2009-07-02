@@ -1,0 +1,1 @@
+TI83Plus.clc is actually a OS 1.19, boot 1.00 dump from a physical 83+.

@@ -1,0 +1,119 @@
+# -*- Makefile -*- for PongOS
+
+#------------------------------------------------------------
+
+# Note: -o20, -c, and -fff are necessary: TiLP requires 32 bytes per
+# record (I'm not sure whether this is also true of wlink) and both
+# expect that all the gaps be filled in.  The image should be filled
+# with FF to avoid unnecessary Flash writing, and to make the file
+# look nicer.
+
+Z80ASM = tasm
+Z80ASMFLAGS = -80 -s -c -fff -o20
+
+export Z80ASM Z80ASMFLAGS
+
+
+
+
+
+
+
+# Set these to point to the utility programs.
+
+PACKXXU = packxxu
+PACKXXUFLAGS = -v 9.99 -h 255
+
+MULTIHEX = multihex
+ROMPATCH = rompatch
+
+# Good luck making this work.
+
+TILINK = tilp
+TILINKFLAGS = -cmdline
+
+# Set this to the path to your ROM dumps or CLC files if you want to
+# install into an emulator.
+
+# If you want to use VTI 2.5, you'll have to set ROM_BE to a "real"
+# ROM image -- that is to say, one that is exactly 512k
+
+ROM_BE = TI83Plus.clc
+ROM_SE = TI83ps.clc
+
+# Then set these to the appropriate directories.
+
+TILEM_PATH = c:\tilem
+
+VTI_PATH = c:\vti
+
+#------------------------------------------------------------
+
+all: pongos.8xu pongos.73u pong-be.rom pong-se.rom
+
+.PHONY: all clean install-ti83p install-ti73 install-tilem install-vti
+
+.DELETE_ON_ERROR:
+
+# Assembly
+
+page00.hex: page00.asm *.asm *.inc page1C.hex
+	$(Z80ASM) $(Z80ASMFLAGS) $< $@
+
+page1C.hex: page1C.asm *.inc
+	$(Z80ASM) $(Z80ASMFLAGS) $< $@
+
+# Generate the complete TI-Hex OS image
+
+pongos.hex: page00.hex page1C.hex
+	$(MULTIHEX) 00 page00.hex 1C page1C.hex > $@
+
+
+# Generating 8XU and 73U requires header and certificate blocks, and a
+# TIFL file header
+
+pongos.8xu: pongos.hex
+	packxxu $(PACKXXUFLAGS) $< -t 83p -o $@
+
+pongos.73u: pongos.hex
+	packxxu $(PACKXXUFLAGS) $< -t 73 -o $@
+
+# Generate a binary ROM image (for use in an emulator) using one
+# already present
+
+pong-be.rom: $(BE_ROM) pongos.hex
+	copy /y $< $@
+	$(ROMPATCH) $@ pongos.hex
+
+pong-se.rom: $(SE_ROM) pongos.hex
+	copy /y $< $@
+	$(ROMPATCH) $@ -s pongos.hex
+
+# Install automatically via tilp
+
+install-ti83p: pongos.8xu
+	$(TILINK) $(TILINKFLAGS) -calc=ti83+ $<
+
+install-ti73: pongos.73u
+	$(TILINK) $(TILINKFLAGS) -calc=ti73 $<
+
+# Install into an emulator
+
+install-tilem: pongos.rom
+	copy /y pongos.rom $(TILEM_PATH)\xp.rom
+	del /y $(TILEM_PATH)\xp.sav
+
+install-vti: pong-be.rom
+	copy /y pong-be.rom $(VTI_PATH)
+	del /y $(VTI_PATH)\pong-be.sav
+
+# Clean
+
+clean:
+	del /y pongos.hex
+	del /y page*.hex
+	del /y page*.exp
+	del /y page*.sym
+	del /y page*.lst
+	del /y pongos.8xu pongos.73u
+	del /y pong-be.rom pong-se.rom

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<skin name="Ti-83+">
+	<image>TI83P.png</image>
+	<keydef>
+		<key>Y=</key>
+		<x-min>10</x-min>
+		<x-max>100</x-max>
+		<y-min>300</y-min>
+		<y-max>400</y-max>
+	</keydef>
+</skin>

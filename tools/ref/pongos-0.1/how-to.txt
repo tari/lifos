@@ -1,0 +1,246 @@
+
+How to do stuff with PongOS, if you really have the urge...
+
+How to type
+-----------
+
+In ordinary operation, including entering numbers, no shifts are
+necessary.  Currently the only place shifts are needed is the hex
+editor when entering an ASCII character.
+
+Alpha = Math on the 73.
+
+Both shifts are momentary.
+
+When you're asked to confirm a possibly dangerous action, press F1
+(Y=) for Yes, or F5 (Graph) for No.
+
+Left and Del both delete the last character typed.
+
+Here's the complete key map for ASCII input:
+
+No shifts               2nd pressed
+
++---+---+---+          	+---+---+---+
+|   |   |   |           |   |   |   |
++---+---+---+           +---+---+---+
+|   |   |   |           |   |   |   |
++---+---+---+---+---+   +---+---+---+---+---+
+| a | b | c |   |   |   | A | B | C |   |   |
++---+---+---+---+---+   +---+---+---+---+---+
+| d | e | f | g | h |   | D | E | F | G | H |
++---+---+---+---+---+   +---+---+---+---+---+
+| i | j | k | l | m |   | I | J | K | L | M |
++---+---+---+---+---+   +---+---+---+---+---+
+| n | o | p | q | r |   | N | O | P | Q | R |
++---+---+---+---+---+   +---+---+---+---+---+
+| s | t | u | v | w |   | S | T | U | V | W |
++---+---+---+---+---+   +---+---+---+---+---+
+| x | y | z |   | ' |   | X | Y | Z |   | " |
++---+---+---+---+---+   +---+---+---+---+---+
+|   |SPC| . | ? |RET|   |   |SPC| : | ! |RET|
++---+---+---+---+---+   +---+---+---+---+---+
+
+Alpha pressed           2nd and Alpha pressed
+
++---+---+---+           +---+---+---+
+|   |   |   |           |   |   |   |
++---+---+---+           +---+---+---+
+|   |   |   |           |   |   |   |
++---+---+---+---+---+   +---+---+---+---+---+
+| = |   |   |   |   |   |   |   |   |   |   |
++---+---+---+---+---+   +---+---+---+---+---+
+| ~ |   |   |   | ^ |   |   |   |   |   | | |
++---+---+---+---+---+   +---+---+---+---+---+
+| ` | , | ( | ) | / |   |   |   | { | } | \ |
++---+---+---+---+---+   +---+---+---+---+---+
+|   | 7 | 8 | 9 | * |   |   | & | * | ( | [ |
++---+---+---+---+---+   +---+---+---+---+---+
+| < | 4 | 5 | 6 | - |   |   | $ | % | ^ | ] |
++---+---+---+---+---+   +---+---+---+---+---+
+| > | 1 | 2 | 3 | + |   |   | ! | @ | # |   |
++---+---+---+---+---+   +---+---+---+---+---+
+|   | 0 | . | - |RET|   |   | ) | ; | _ |RET|
++---+---+---+---+---+   +---+---+---+---+---+
+
+
+How to remove PongOS
+--------------------
+
+Pull the battery and re-insert it while holding down the DEL key.
+
+Using STAT instead of DEL may be needed on the 84 to send the OS by
+USB.
+
+Obviously if you somehow trash your certificate, you'll have a hard
+time loading a signed OS.  Fortunately PongOS is always an option. :)
+
+
+How to mess around with the FlashROM
+------------------------------------
+
+Depends on exactly what you mean by that.
+
+73 apps are allocated starting at page 8 and proceed upwards; 83+ apps
+start at page 15 / 29 / 69 and proceed downwards.
+
+Standard behavior on the 83+ is to assign sector 2 as the initial temp
+sector.
+
+Certificates are stored in one half or the other of page 1/3/7E.  It
+appears that when this data is modified, it is moved into the other
+sector, thus requiring no additional RAM or Flash for the operation.
+Attempting to read this data may be illegal in the United States under
+section 1201(a)(1) of the Digital Millennium Copyright Act.  Similar
+laws may apply elsewhere.
+
+Here's the schematic diagram-thingy.
+
+Sector #   Page #     Size  Function
+
+BE 84 SE   BE 84 SE         73        83+/SE        84+/SE
+
+ 0  0  0   00 00 00   64k   OS ---------------------->
+ 1  1  1   04 04 04   64k   OS ---------------------->
+
+ 2  2  2   08 08 08   64k   Apps      Arc/temp ------>
+ 3  3  3   0C 0C 0C   64k   Apps      Arc/apps/temp ->
+ 4  4  4   10 10 10   64k   ?         Arc/apps ------>
+    5  5      14 14   64k             Arc/apps ------>
+    6  6      18 18   64k             Arc/apps ------>
+    7  7      1C 1C   64k             Arc/apps ------>
+    8  8      20 20   64k             Arc/apps ------>
+    9  9      24 24   64k             Arc/apps ------>
+      10         28   64k             Arc/apps ------>
+      11         2C   64k             Arc/apps ------>
+      12         30   64k             Arc/apps ------>
+      ...        ...  ...             ...
+      25         64   64k             Arc/apps ------>
+ 5 10 26   14 28 68   64k   ?         32k apps ------>
+
+   11 27      2C 6C   64k             Free?          Boot code
+   12 28      30 70   64k             Free?          Free?
+   13 29      34 74   64k             Free?          OS
+
+ 6 14 30   18 38 78   64k   OS ---------------------->
+ 7 15 31   1C 3C 7C   32k   OS ---------------------->
+ 8 16 32   1E 3E 7E   8k    Certificates ------------>
+ 9 17 33              8k    Certificates ------------>
+10 18 34   1F 3F 7F   16k   Boot code --------------->
+
+
+Following are three fairly simple, and if you're careful, fairly safe
+things you can do with PongOS.  Keep the above diagram in mind as we
+march forward...
+
+
+How to remove a file from the TIOS archive
+------------------------------------------
+
+This can be useful, for example, if you did something really dumb like
+archive OFFSCRPT, or forget your Krolypto password.
+
+Find the variable you want to delete.  Start at page 08, address 4001,
+in ASCII mode.  Press V until the variable's name appears.  The first
+byte on the screen each time should be an archive flag byte, normally
+FC (u with diaeresis) for an existing file or F0 (eth) for a deleted
+one.  Note the address and page of the flag byte.
+
+Set the Hex Editor to an unused address of RAM (to be safe, somewhere
+beyond 8600 or so.)  Set the byte there to F0.
+
+Now use the Flash Mover to copy that byte over the flag byte.
+
+
+How to add files to the TIOS archive
+------------------------------------
+
+Note: doing anything of the sort on a 73 will thoroughly crash TIOS.
+
+First find a place to put the file.  Start at page 08, address 4001;
+press V until the screen fills up with FF's.  Make sure that you're
+not looking at the beginning of the temp sector, and make sure that
+there's enough space left in the sector for the data.
+
+Note the address and page where you're planning to put the variable.
+
+Create a file header in RAM somewhere.  It looks like this:
+
+ <FC> SL SH DT <00> <00> AL AH AP NL Name ... XL XH
+
+where SH SL = size of whole entry (7 + Name Length + 2 + Data Size)
+      DT = data type
+      AH AL = address where you're going to put it
+      AP = page where you're going to put it
+      NL = length of name
+      Name = up to 8 bytes TI-ASCII
+      XH XL = length of data (assuming it's a program or appvar)
+
+Copy this block (0C + NL bytes) to Flash.
+
+Then find the data you want to put in the variable, and copy it to the
+address following that (AP AH AL + 0C + NL).)
+
+
+How to initialize a new archive sector
+--------------------------------------
+
+Do not attempt this with:
+ - any sector that has apps in it
+ - the temp sector (whose first byte is FE)
+ - a sector out of the proper range
+
+(I'm constantly hearing about people who are trying to "expand their
+archives" by means of some bug in TIOS that makes it think there's 64k
+additional space.  You certainly could store more data if you added
+illegal archive sectors.  But you would also crash the thing pretty
+badly at the next garbage-collect.  So don't do it.  If you have an
+app sector that you want to convert into archive, you can erase that
+sector.)
+
+Find a sector you like, a page divisible by 4, whose first byte is FF
+and which doesn't have any data at all in the following pages.
+
+Put an F0 at some unused byte of RAM, then copy that byte to 4000 on
+the first page of the sector.
+
+You can then add files to the new sector as above, starting at 4001.
+
+
+How to add additional pages to the OS
+-------------------------------------
+
+So you want to assemble a bigger OS?  That's just fine, because I
+designed PongOS's build system for the full-fledged 6-page OS I'm
+planning on writing one of these years...
+
+Let's say you want to add code for page 1.  You'll create a page01.asm
+containing the stuff you want there.  You'll '.export' labels that you
+want to refer to on page 0 (and you'll then import them by #including
+page01.exp.)  Here's what you need to do:
+
+
+- Add a rule to the Makefile to assemble page01.hex (and add the
+  corresponding command to makeall.bat)
+
+- Add the prerequisite to the rule for page 0, so that page 0 will be
+  remade if page 1 has been changed (so that the exported addresses
+  will be correct)
+
+- Change the multihex commands so they look like this
+
+multihex 00 page00.hex 01 page01.hex 1C page1C.hex > pongos.hex
+
+
+Good luck.
+
+
+How to play Pong
+----------------
+
+It can be helpful to put mirrors at the top and bottom of the LCD, so
+that you can see how the ball will bounce.  Good luck trying to play
+with a pair of mirrors stuck to your calculator :)
+
+You can also tell the calculator to play for you, and then pretend to
+push the buttons.

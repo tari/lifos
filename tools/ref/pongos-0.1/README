@@ -1,0 +1,317 @@
+
+PongOS 0.1
+----------
+
+I started writing this as an entry to the Greenfire Pong programming
+challenge, because I had a weekend to waste.  I figured I could never
+compete in terms of game-play, so I thought I'd try something
+different, and the idea sounded fun.
+
+I actually worked on it for about an hour before I realized it
+wouldn't be a valid entry, on the basis that it doesn't run under the
+allowed environments -- TIOS and Ion :)
+
+I'm releasing it now as an illustration of the process of creating a
+free OS.  In addition, a few people have started asking me about how
+to write to Flash.  I'm hoping that the release of this code may be
+helpful to some of you.
+
+My apologies to those of you who are trying to take the whole issue
+seriously.  Someday I hope there will actually be a useful, free OS --
+but a voice in my head told me to release stuff, so I did.
+
+Actually, this was an important step, because I learned along the way
+just how complicated certain issues would be, and I developed my OS
+tools to the point of being useful.
+
+Thus I present to you: the world's most ridiculously wasteful Pong
+game for the TI-83+, 73, and (Herb willing) the 84+ as well.
+
+Though at -192 kilobytes, it must be the smallest Pong game yet
+created!
+
+The newest version of this program can be found at
+http://pongos.sourceforge.net/.
+
+
+Firstly
+-------
+
+I do not encourage any illegal activity, including the modification of
+TI's copyrighted operating systems, the illegal redistribution of
+FlashApps or certificates by any means, or the circumvention of
+measures designed to prevent redistribution of FlashApps or
+certificates.
+
+I furthermore claim that PongOS is not designed for any of the above
+purposes, though it is a general-purpose tool.
+
+The following instructions, and the accompanying 8xu and 73u files,
+are provided SOLELY for the purpose of compatibility, to allow PongOS
+to run on the target machines.
+
+
+And of course
+-------------
+
+There is ABSOLUTELY NO WARRANTY OF ANY KIND.  This program has the
+potential to thoroughly trash your calculator if used improperly, or
+indeed even if used properly.  I do not guarantee it is bug-free; it
+is provided AS IS.  Use it at your own risk.
+
+
+Assembling the source
+---------------------
+
+I recommend you try it.  To be honest, I don't see much point in using
+this OS if you're not going to play around with it.
+
+You'll need:
+
+- Thomas Anderson's TASM, or another assembler and some heavy-duty
+  scripts.
+
+- My OS tools (multihex, rompatch, and packxxu.)  Or some equivalent:
+  the operations they perform are fairly simple.
+
+- If you want to test in an emulator, the CLC file(s) from TI's Flash
+  Debugger, or your own ROM image if you prefer.  Note that if you
+  want to use VTI 2.5, you'll have to truncate the file to 512k.
+
+- Make.  I'd recommend GNU make, but that's just my opinion.  DOS
+  users who can't be bothered to get make can run makeall.bat instead,
+  which of course isn't as cool. :)
+
+- Some patience, and the willingness to fool around with the output
+  files if need be.
+
+Given all of the above, simply running "make" should do the trick.
+You might want to tweak the makefile a bit.
+
+The following files are produced:
+
+ pongos.hex: plain TI-Hex, suitable for Flashsim
+ pongos.8xu: 83+ upgrade file
+ pongos.73u: 73 upgrade file
+ pong-be.rom: Binary ROM for BE
+ pong-se.rom: Binary ROM for SE
+
+
+Before you install
+------------------
+
+Check your boot version.
+
+The easiest way is to act like you want to begin a self-test.  On the
+83+, press Mode, Alpha, S.  On the 73, enable insert mode at the
+homescreen, then press Mode, 2nd, Ins.  Note the version, then press
+On (or your favorite non-Enter key) because you don't actually want to
+run the self-test.
+
+The other option is to load Calcsys and do a BC 808A.
+
+I've only ever seen 83+'s with boot version 1.00.  If you have a
+different boot version, and something goes wrong during the
+installation, there's a non-zero probability that the two are
+connected.  The 73 ROM packed with Flashsim has boot version 1.3005,
+so presumably there are several out there.
+
+In any case, if you believe that your boot code is causing problems,
+please tell me about it.
+
+If you have an 84+, see the note below.
+
+
+Installation
+------------
+
+If you don't know how to work your link program, that's a good
+indication that you should not be using PongOS.
+
+I think that TI-Connect will accept the file, but I'm not certain.
+TI-Connect is by design rather finicky.  Either TIGL or TiLP should
+work just fine.
+
+Find the OS file, pongos.8xu for the 83+ or pongos.73u for the 73.
+Set the thing loading.
+
+Here is where it gets tricky.  You'll see the traditional "Receiving
+Calculator Software."  The calculator shows a percentage indicator,
+although in fact it has no idea how big the OS is or even how many
+pages it will take up.  The "percentage" you see is simply the number
+of pages successfully transferred, times 7.  (The progress indicator
+in TiLP is in fact the correct percentage.)
+
+When it reaches 14%, therefore, the OS will have been completely
+transferred.  At this point TiLP sends over the OS signature, and the
+calculator enters the validation phase.  You must immediately pull a
+battery, or the boot code will proceed to erase the OS you just
+loaded.  No need to remove the lithium battery or wait for the
+capacitors to drain: you just need to reset the CPU.  Disconnect the
+cable, then pop the battery back in.  That's all there is to it!
+
+Note that since PongOS uses only a tiny bit of page 1C, you can safely
+interrupt the transmission in the middle; to be safe, I'd try pulling
+the battery around three-quarters of the way through.  However, keep
+in mind that this method is not generally applicable; whether it is
+possible depends on the OS.
+
+
+What does it do?
+----------------
+
+- Set up a functional interrupt handler.
+
+  Hold ON and press:
+
+    2nd to put the calculator to sleep;
+
+    + and - to change contrast;
+
+    DEL to force a reboot;
+
+    LOG (X on the 73) to enter "instant debug" (which simply displays
+    the current Flash page and the top of the stack.)
+
+  Automatic sleep mode has NOT been implemented, so don't leave the
+  calculator on, or you'll lose your batteries.
+
+- Play Pong, of course. :)
+
+  This was the primary reason for writing this program.
+
+  Left player's controls are 2nd and Alpha (2nd and Math on the 73,
+  that is.) Right player's are Up and Down.
+
+  The calculator should be impossible to beat; just try to score as
+  well as you can.
+
+  Press Enter to pause the game, so you can see the scores.  Press
+  Mode at this point to quit, or Enter to keep playing.
+
+- Fool around with the calculator.
+
+  The System Tools, largely inspired by Dan Englender's Calcsys app,
+  allow you to play with the calculator, and maybe even crash it.
+
+  All numbers within these "apps" are hexadecimal unless otherwise
+  noted.
+
+  - Hex Editor: very simple, Calcsys-like interface.  If you move to
+    the beginning (flag byte) of an archive entry, you can then press
+    V to move to the next one.  Press A to switch between hex and
+    ASCII.  F to search logical memory for one byte, E for two.
+
+  - Flash Mover: copy a block of memory from one place to another;
+    works to copy either to Flash or to RAM.  Be very careful with
+    this.  You can quite easily trash PongOS, or more importantly your
+    calculator certificate (either sector 8 or 9, on page 1E.)  Don't
+    do anything dumb.
+
+  - Flash Eraser: erase a sector of FlashROM.
+
+  - Port Monitor: read and write hardware ports, including protected
+    ones.
+
+What doesn't it do?
+-------------------
+
+- Wreak havoc on your files (I hope)
+
+  TIOS, of course, will reset the RAM when you re-load it.  PongOS
+  doesn't bother to do so, though it scribbles over a bit of the
+  system RAM.
+
+  In addition, the boot code always erases sector 6 (18-1B) before
+  loading an OS.  I can't imagine any easy way around this.  But it
+  doesn't matter for now, since that sector is supposed to be OS data
+  anyway.
+
+- Listen to any link commands.
+
+- Remove itself.
+
+  To remove it, hold the DEL key while pulling out and re-inserting a
+  battery.  Then send your favorite OS using the standard methods.
+
+- It can be programmed by the metaphorical screwdriver.  Its entire
+  purpose in life is to play Pong.
+
+
+About the 84+
+-------------
+
+The 84+, as far as I can tell, is an 83+ semi-silver, plus clock and
+special USB port.  PongOS should *in theory* work on it without
+modification.
+
+I have, at the time of this writing, yet to see a physical 84+.  If
+you have one, and you're willing to try to put PongOS on it, go for
+it!  Then tell me what you find out!  Direct USB means it'll be that
+much harder to interrupt the thing at just the right moment; you may
+want to use a traditional graphlink instead, just to slow down the
+transmission.
+
+Anyway, even if you don't want to put PongOS on it, I'd greatly
+appreciate it if you would examine your boot code and determine:
+
+ (a) whether, were PongOS already installed, the boot code would
+     accept it as validated and boot it;
+
+ (b) whether the OS installation routine contains additional security
+     measures that would prevent it from being loaded.
+
+
+Legal stuff
+-----------
+
+PongOS is copyright 2003 Benjamin Moody.
+
+PongOS is free software. This does not mean "free" as in "free beer."
+Certainly that definition would apply to TI's operating systems, which
+you can download with a few clicks from epsstore.ti.com.  But PongOS
+is free as in "free speech," as they say; you are free to redistribute
+and modify it as you see fit, under the terms of the GNU General
+Public License.
+
+This means that you are guaranteed access to the source code, that you
+can change it however you like, and that you can use code from PongOS
+in your own programs.  It also means that when you redistribute PongOS
+or a derivative program, everyone who receives a copy must also
+receive those same rights.
+
+If you create another OS that is substantially your own work, but you
+want to use bits of code from PongOS, I will probably be willing to
+allow a different license (by prior arrangement, of course) but I
+certainly ask that the program be free.
+
+See COPYING for more information.
+
+Let me reiterate that there is absolutely no warranty of any kind.
+
+
+Thanks
+------
+
+Such as they are.  My gratitude goes out to everyone who participated
+in the "early" pages of the OS Replacement Project discussion --
+without that, PongOS literally would never have happened.  In
+particular: Rob van Wijk and Jason Malinowski, as well as Michael
+Vincent, Dan Englender, and Scott Dial.
+
+It seems appropriate that I should also acknowledge Joe Wingbermuehle,
+who has sadly left the calculator world, but who left behind the Ion
+libraries, based upon which PongOS's graphics code was designed.
+
+Finally, I'd like to thank my impromptu beta-testers.
+
+
+Who am I?
+---------
+
+I am Benjamin Moody, also known as FloppusMaximus.
+
+I welcome all your comments, and even the occasional bug report. You
+can email them to me at benjamin@ecg.mit.edu.  I'm also a frequent
+lurker on the Detached Solutions forum.
+
