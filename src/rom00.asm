@@ -35,9 +35,8 @@ __rom00_begin:
 ;boot code returns here
 	jp Boot
 .org 0056h
-;flag indicating a prevalidated OS.  I think the boot code would wipe the OS if this
-;	wasn't marked valid, when it was invoked.
-	.db $5A, $A5
+;Something involving validation.  Make this 5AA5 if not signing with 05
+	.db $FF, $A5
 .org 0064h
 ;OS version string
 	.db LIFOS_VER,0
