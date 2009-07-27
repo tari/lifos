@@ -11,9 +11,9 @@ LINCALC = tools/emu/lincalc/run.sh
 
 DEPS 	=	src/* \
 
-MAIN	= src/asm/main.asm
-BIN	= bin/Vera.rom
-HEX	= bin/Vera.hex
+MAIN	= src/main.asm
+BIN	= bin/LIFOS.rom
+HEX	= bin/LIFOS.hex
 
 ## Directories
 
@@ -38,7 +38,7 @@ asmdoc :
 pti :	
 	chmod +x $(PTI)
 	$(PTI)
-	rm -f pti.conf bin/Vera.rom.pti
+	rm -f pti.conf bin/LIFOS.rom.pti
 
 lincalc:
 	chmod +x $(LINCALC)
