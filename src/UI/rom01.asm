@@ -1,4 +1,4 @@
-MUI_MAIN:
+UI_MAIN:
 .include "src/unittest.asm"
 #IFNDEF UNIT_TEST
 	set textToBuf,(IY+0)

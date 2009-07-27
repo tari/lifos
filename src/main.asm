@@ -51,10 +51,10 @@
 #DEFCONT        \   .db ESub_T
 
 #DEFINE NUM_SYSCALLS	26
-#DEFINE LIFOS_VER "LIFOS 0.1.0a"
+#DEFINE LIFOS_VER "LIFOS 0.1.1a"
 #DEFINE LIFOS_VER_MAJOR 0
 #DEFINE LIFOS_VER_MINOR 1
-#DEFINE LIFOS_VER_BUILD 0
+#DEFINE LIFOS_VER_BUILD 1
 #DEFINE CALCTYPE ct83PBE
 ;#DEFINE UNIT_TEST
 
@@ -68,12 +68,13 @@
 #DEFINE rSysCall 30h
 #DEFINE rSysInt 38h
 
-.echo "Building as version "\.echo LIFOS_VER_MAJOR\.echo "."\.echo LIFOS_VER_MAJOR\.echo "."\.echo LIFOS_VER_BUILD\.echo "\n"
-.echo "For hardware type "\.echo CALCTYPE\.echo "\n"
+.echo "Building as version "\.echo LIFOS_VER_MAJOR\.echo "."\.echo LIFOS_VER_MINOR\.echo "."\.echo LIFOS_VER_BUILD
+.echo " for hardware type "\.echo CALCTYPE\.echo "\n"
 
-.include "src/inc/hardware.inc"
-.include "src/inc/RAM.inc"
-.include "src/inc/getCSC.inc"
+.include "inc/hardware.inc"
+.include "inc/RAM.inc"
+.include "inc/getCSC.inc"
+.include "inc/errors.inc"
 
 .page 00	;kernel code
 .include "src/rom00.asm"
@@ -90,7 +91,7 @@ sector(5)	;14-17  |
 sector(6)	;18-1B  |
 
 .page 28	;privileged page 1
-.include "src/asm/rom1C.asm"
+.include "src/rom1C.asm"
 
 .page 29	;privileged page 2
 .page 30	;certificate sectors here

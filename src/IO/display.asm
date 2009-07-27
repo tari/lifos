@@ -1,6 +1,6 @@
 display_begin:
-.include "src/asm/IO/lfont.asm"
-.include "src/asm/IO/sfont.asm"
+.include "src/IO/lfont.asm"
+.include "src/IO/sfont.asm"
 
 .module LCDWait
 LCDWait:

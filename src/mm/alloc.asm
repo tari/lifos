@@ -160,7 +160,7 @@ _shiftOthersUp:
      pop hl
     dec hl      ;top of block to shift (bottom of new empty-1)
     push bc     ;size of chunk on the stack right now
-     ld bc,(_varsLowEnd)
+     ld bc,(varsLowEnd)
      push hl
       or a
       sbc hl,bc

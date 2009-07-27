@@ -49,7 +49,7 @@ _cplLoop:
 	jp nz,putSprite	;it will return to my caller
 	jp putSpriteLCD
 _charTab:
-.include "src/asm/IO/lfont.h"
+.include "src/IO/lfont.h"
 
 PutC:
    cp $D		;CR (nyah nyah, CR/LF)

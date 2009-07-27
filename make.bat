@@ -11,7 +11,7 @@ echo hexconv = "%hexconv%"
 set asmdoc=tools\doc\asmdoc.exe
 echo Asmdoc = "%asmdoc%"
 rem Files
-set main=src\asm\main.asm
+set main=src\main.asm
 echo main source file = "%main%"
 set bin=bin\LIFOS.rom
 echo output file = "%bin%"
