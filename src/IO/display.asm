@@ -2,6 +2,29 @@ display_begin:
 .include "src/IO/lfont.asm"
 .include "src/IO/sfont.asm"
 
+.module dispAHex
+;;dispAHex: writes A to the screen in hex
+;;Inputs:
+;;  A: value to write
+;;Outputs:
+;;  Cursor updated
+;;Modifies:
+;;  AF, whatever putC does
+dispAHex:
+    push af
+     and 0Fh
+     add a,'0'
+     call putC
+     pop af
+    srl a
+    srl a
+    srl a
+    srl a
+    and 0Fh
+    add a,'0'
+    call putC
+    ret
+
 .module LCDWait
 LCDWait:
 	push af

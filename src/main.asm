@@ -35,20 +35,15 @@
 .defpage 31, $4000, $4000
 
 ;==========Macro definitions============
-#DEFINE		dep(depNum)	rst 28h
-#DEFCONT		\	.db depNum
 #DEFINE		sector(xx)	.page 4*xx
 #DEFCONT		\	.page (4*xx)+1
 #DEFCONT		\	.page (4*xx)+2
 #DEFCONT		\	.page (4*xx)+3
-#DEFINE		CleanExit() or a
-#DEFCONT		\		ret
-#DEFINE		ErrorOut(EMain_T) call EOUT_MACRO
-#DEFCONT        \   .db EMain_T
-#DEFCONT        \   .db 0
+#DEFINE		CleanExit() ret
+#DEFINE		ErrorOut(EMain_T) rst rERROROUT
+#DEFCONT		\	.dw 256*eMinor_Undef + eMain_T
 #DEFINE     ErrorOut(EMain_T,ESub_T) call EOUT_MACRO
-#DEFCONT        \   .db EMain_T
-#DEFCONT        \   .db ESub_T
+#DEFCONT        \   .dw 256*eSub_T + eMain_T
 
 #DEFINE NUM_SYSCALLS	26
 #DEFINE LIFOS_VER "LIFOS 0.1.1a"
@@ -57,16 +52,6 @@
 #DEFINE LIFOS_VER_BUILD 1
 #DEFINE CALCTYPE ct83PBE
 ;#DEFINE UNIT_TEST
-
-;============Reset vectors============
-#DEFINE rReset 00h
-#DEFINE rScanKey 08h
-#DEFINE rPutSprite 10h
-#DEFINE rmAlloc 18h
-#DEFINE rLCDWait 20h
-#DEFINE rDepends 28h
-#DEFINE rSysCall 30h
-#DEFINE rSysInt 38h
 
 .echo "Building as version "\.echo LIFOS_VER_MAJOR\.echo "."\.echo LIFOS_VER_MINOR\.echo "."\.echo LIFOS_VER_BUILD
 .echo " for hardware type "\.echo CALCTYPE\.echo "\n"

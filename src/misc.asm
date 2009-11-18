@@ -171,4 +171,15 @@ getHardVersion:
 	ret z
 	inc a
 	ret
+	
+;;is83PBE: returns nz if 83+, z otherwise
+is83PBE:
+	push bc
+	 push af
+	  in a,(2)
+	  bit 7,a	;reset on 83PBE
+	  pop bc
+	 ld a,b
+	 pop bc
+	ret
 .echo "misc.asm:	"\.echo $-misc_begin\.echo " bytes\n"

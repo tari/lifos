@@ -26,10 +26,10 @@ TALKTI:
     jr z,_MID_OK
     cp 73h
     jr nz,_MID_FAIL
-    
+_MID_OK:
 _MID_FAIL:          ;Abort send with 0x36 CID (REJECT)
     call recvAByte  ;CID
-    call _CID_has_data
+    call _CID_hasData
     push af
      call recvAByte  ;length LSB
      ld e,a
@@ -44,7 +44,7 @@ _MID_FAIL_getData:
     or d
     jr nz,_MID_FAIL_getData ;got data field
     call recvAByte
-    call recvByte           ;checksum
+    call recvAByte           ;checksum
 _MID_FAIL_SEND: ;send the rejection packet
     ld a,36h
     call sendPacketHeader   ;MID, CID

@@ -1,94 +1,127 @@
 __link_begin:
 #DEFINE TIMEOUT 0FFFFh
-;bit 0=tip/red.  Pull low first for logical 0
-;bit 1=ring/white.  Pull low first for logical 1
-.module sendAByte
-;;sendAByte: sends a byte via the link port
-;;\DIV
-;;Input:
-;;	A=byte to send
-;;Output:
-;;	Carry set if transmission error
+;;Link protocol outline:
+;;The sending device pulls one of the link lines low to send a bit.  Bit 0 of
+;; port 0 for socket tip, and bit 1 for the ring.  Pulling the tip low first
+;; indicates a logical 0, ring first is a logical 1.
+;;Recieving device pulls other line low to acknowledge receipt, and waits for
+;; sending device to release the line.  Finally, sending device waits for
+;; recieving device to release the ACK line.
+
+LINK_TIMEOUT:
+	ErrorOut(eLink,eLink_Timeout)
+LINK_ERROR:
+	ErrorOut(eLink,eLink_Generic)
+
+;;Sends the value in A out via the link port (TI-OS protocol), using the link
+;; assist if available.
+;;Inputs:
+;;	A: byte to send
+;;Outputs:
+;;	None
 ;;Modifies:
-;;	af,bc,de
-;;\DIV
+;;	See sendCByte
+;;Errors:
+;;	eLink/eLink_Timeout: if routine recieves no ACK within ~.25 seconds
 sendAByte:
 	ld c,a
+sendCByte:
+	di		;;TODO: conditionally re-enable when done
+;	call is83PBE
+;	jr z,_sendCByteLA
 	ld b,8
-    ld de,TIMEOUT    ;timeout counter
-_loop_byte_send:
+_sendLoop:
+	ld de,TIMEOUT
 	rr c
-    ld a,1
-	jr nc,_is_reset
+	jr nc,_sendLowBit
 	ld a,2
-_is_reset:
+	jr _sendContinue
+_sendLowBit:
+	ld a,1
+_sendContinue:
 	out (0),a
-_bit_loop:
+_sendAckWait:	;wait for other line low (ACK)
 	in a,(0)
 	and 3
-	jr z,_bit_done  ;wait for other line low (ack)
-	dec de
-	ld a,d
-	or e            ;if no ack, check timeout and keep waiting
-	jr nz,_bit_loop
-_link_error:
-	scf
-	ret
-_bit_done:          ;recieved ACK
-	xor a
-	out (0),a       ;release lines
-	ld de,TIMEOUT
-_really_done:
+	jr z,_sendBitDone
+	in a,(0)
+	and 3
+	jr z,_sendBitDone
 	dec de
 	ld a,d
 	or e
-	jr z,_link_error
+	jr nz_sendAckWait
+	jr LINK_TIMEOUT
+_sendBitDone:
+	xor a
+	out (0),a	;clear pulls
+	ld de,TIMEOUT
+_sendBitReallyDone:
+	dec de
+	ld a,d
+	or e
+	jr z,LINK_TIMEOUT
 	in a,(0)
 	and 3
-	cp 3            ;wait for ACK to be released
-	jr nz,_really_done
-	djnz _loop_byte_send
-	scf
-	ccf
-	ret
-.endmodule
+	cp 3		;wait for other line to release
+	jr nz,_sendBitReallyDone
+	djnz _sendLoop
+	ei
+	CleanExit()
 
-.module recvAByte
 recvAByte:
+	call recvCByte
+	ld a,c
+	ret
+	
+;;Modifies:
+;;	AF,BC,DE
+recvCByte:
+	push hl
+	di			;;TODO: replace with contitional re-enablement of interrupts
+	;call is83PBE
+	;jr z,_recvLA_SE
+	;;TODO: actually use link assists
+_recvLA_SE:
+_recvBE:
 	ld b,8
-    ld de,TIMEOUT    ;timeout counter
-_waitBit:
-    dec de
-    ld a,d
-    or e
-    jr z,_linkError
-    in a,(0)
-    and 3
-    cp 3
-    jr z,_waitBit    ;wait until one line is low
-_gotBit:
-    push af
-     rra
-     jr nc,_gotBitValue
-     scf
-_gotBitValue:       ;value gotten is in carry flag
-     rl c
-     pop af
-    and 3           ;mask old link value for ACK (write set to pull low, so it's easy)
-    ld de,TIMEOUT/4
-    out (0),a
-_ackPull:
-    dec de
-    ld a,d
-    or e
-    jr nz,_ackPull
-    xor a
-    out (0),a       ;release ACK
-    ret             ;xor resets C, all's well
-_linkError:
-    scf
-    ret
-.endmodule
+	ld de,TIMEOUT
+_recvCLoop:
+	in a,(0)
+	and 3
+	jr nz,_recvC
+	dec de
+	ld a,d
+	or e
+	jr nz,_recvCLoop
+	jp LINK_TIMEOUT
+_recvC:
+	cp 1		;..meaning sent a logical 0
+	jr z,_recvCAck
+	scf			;`and` reset carry earlier
+_recvCAck:
+	rl c		;carry reflects recieved bit
+	xor 3
+	ld h,a		;expected link state when send is released
+	out (0),a	;send ACK
+	ld de,TIMEOUT
+_recvCAckWait:
+	in a,(0)
+	cp h
+	jr z,_recvCReleaseAck
+	dec de
+	ld a,d
+	or e
+	jr nz,_recvCAckWait
+	jp LINK_TIMEOUT
+_recvCReleaseAck:
+	xor a
+	out (0),a	;release ACK
+	djnz _recvCLoop
+	ei
+	pop hl
+	CleanExit()
+	
 
 ;;sendPacketHeader: sends the header for a given packet type
 ;;Inputs:
@@ -111,5 +144,6 @@ sendHL:
     call sendAByte
     ret
     
-.include "src/asm/IO/packet.asm"
+.include "src/IO/packet.asm"
+__link_end:
 .echo "link.asm      "\.echo $-__link_begin\.echo " bytes\n"

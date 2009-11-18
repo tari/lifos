@@ -23,7 +23,7 @@ Boot:
 	out (3),a		; default interrupt
 	ld a,$76
 	out (4),a		; standard int clock
-.echo "Careful with init.asm, line 26.\n"
+.echo "Careful with init.asm, line 27.\n"
 	ld a,$1C		;the hardware will mask this if needed.. but Flash Debugger won't.  F'in TI.
 	out (6),a
 _StackInit:	;this goes here so we're sure the stack is OK before our first call
