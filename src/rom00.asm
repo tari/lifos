@@ -1,17 +1,33 @@
 __rom00_begin:
+.define code_overflow(addr) .if $ >= addr \ .fail "Code overflow past ",addr,": ",$ \ .endif
+
 .org 0000h
 	jp Boot
 
 .org 0008h
-	jp scanKey
+rLDHLIND:
+	push af
+	ld a,(hl)
+	inc hl
+	ld h,(hl)
+	ld l,a
+	pop af
+	ret
+	code_overflow(0010h)
 
 .org 0010h
-	jp putSprite
+rERROROUT:
+	ex (sp),hl
+	rst rLDHLIND
+	ld (errorCodes),hl
+	pop hl
+	ret
 
 .org 0018h
-	jp mAlloc
+	ret
 
 .org 0020h
+rLCDWAIT:
 	push af		;20
 	in a,($10)	;21
 	rla			;23
@@ -41,7 +57,26 @@ __rom00_begin:
 ;OS version string
 	.db LIFOS_VER,0
 
-OS_MAIN:
+_initOKStr:
+.db " init OK!",$D,0
+OS_MAIN:    ;link debugging! woo!
+    ld a,0
+    call dispAHex
+    ld hl,_initOKStr
+    call putS
+_recvLoop:
+    in a,(0)
+    and 3
+    cp 3
+    jr z, _recvLoop
+    call recvAByte
+    jr c,_end
+    call dispAHex
+_end:
+    jr $
+    .dw 0
+
+
 	ld a,1
 	out (6),a
 	jp UI_MAIN
@@ -55,7 +90,7 @@ OS_MAIN:
 .include "src/misc.asm"
 .include "src/IO/display.asm"
 .include "src/IO/keypad.asm"
-;.include "src/IO/link.asm"		;NOT READY
+.include "src/IO/link.asm"
 ;.include "src/pucrunch.asm"		;NOT READY
 OS_CODE_END:
 .echo "Page 00:	"\.echo $\.echo " bytes total, less syscallTab\n"
