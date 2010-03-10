@@ -51,7 +51,7 @@ rLCDWAIT:
 ;boot code returns here
 	jp Boot
 .org 0056h
-;Something involving validation.  Make this 5AA5 if not signing with 05
+;Something involving validation.  Make this 5AA5 if not signing the image
 	.db $FF, $A5
 .org 0064h
 ;OS version string

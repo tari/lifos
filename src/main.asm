@@ -44,12 +44,24 @@
 #DEFCONT		\	.dw 256*eMinor_Undef + eMain_T
 #DEFINE     ErrorOut(EMain_T,ESub_T) call EOUT_MACRO
 #DEFCONT        \   .dw 256*eSub_T + eMain_T
+#DEFINE     ErrorOutC(EMain_T,ESub_T) jr nc,{@}
+#DEFCONT        \   ErrorOut(EMain_T,ESub_T)
+#DEFCONT        \   @
+#DEFINE     ErrorOutNC(EMain_T,ESub_T) jr c,{@}
+#DEFCONT        \   ErrorOut(EMain_T,ESub_T)
+#DEFCONT        \   @
+#DEFINE     ErrorOutZ(EMain_T,ESub_T) jr nz,{@}
+#DEFCONT        \   ErrorOut(EMain_T,ESub_T)
+#DEFCONT        \   @
+#DEFINE     ErrorOutNZ(EMain_T,ESub_T) jr z,{@}
+#DEFCONT        \   ErrorOut(EMain_T_ESub_T)
+#DEFCONT        \   @
 
 #DEFINE NUM_SYSCALLS	26
-#DEFINE LIFOS_VER "LIFOS 0.1.1a"
+#DEFINE LIFOS_VER "LIFOS 0.1.2a"
 #DEFINE LIFOS_VER_MAJOR 0
 #DEFINE LIFOS_VER_MINOR 1
-#DEFINE LIFOS_VER_BUILD 1
+#DEFINE LIFOS_VER_BUILD 2
 #DEFINE CALCTYPE ct83PBE
 ;#DEFINE UNIT_TEST
 

@@ -111,16 +111,13 @@ allocVarHL:
 .module allocVar
     ld (_writeToBlock),hl
 _allocateBlock:
-    
 ;error checking
     call freeStackSpace
 ;Needs 128 byte buffer, 1 word for any ISR, 2 words scrap, and 1 word safety-net
     ld hl,128+8
     or a
     sbc hl,bc
-    jr nc,_enoughStack
-_notEnoughStack:
-    ErrorOut(eMemory,eMem_OutOfStack)
+    ErrorOutC(eMemory,eMem_OutOfStack)
 _enoughStack:
 	call findVar
 	jr nc,_exists

@@ -1,5 +1,5 @@
-;the dependency macro will live here
-
+;;EOUT_MACRO: basic handler to cleanly exit from system routines on error.
+;;Return carry set with detailed info (if available) at errorCodes.
 EOUT_MACRO:
     ex (sp),hl
     inc sp

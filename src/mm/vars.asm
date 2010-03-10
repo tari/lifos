@@ -8,16 +8,20 @@
 ;;	to account for absolute data references.
 ;;
 ;;VAT entry spec:
-;;	type | 1
+;;	type | 1 [VtProg*]
 ;;	page | 1
 ;;	addr | 2
 ;;	name | 10
-;;Program header spec:
-;;	size | 2				| $0100		;system relies on this for var management
-;;	dataptr | 2				| $14E3		;offset from program start to the data segment (only exists in DRP headers)
-;;	numdeps | 1				| (%011 << 5)+1	;numdeps is enforced within depstrs
-;;	depstrs | 0+(10*numdeps)	| "<StdLib>  "	;defines library dependencies
-;;	version | 2				| 0,20		;minimum OS version required
+;;New header spec:
+;;  size | 2        | Variable size (including header)
+;;  version | 2     | Minimum OS version
+;;==== Special entries valid only for DRPs ====
+;;==== Current DRP header version: 0       ====
+;;  headerv | 1     | DRP header version
+;;  pdssize | 2     | Size of PDS
+;;  pdssig  | 4     | PDS signature
+;;  vdssize | 2     | Size of VDS
+;;  data    | size  | Program code- main entry point
 
 createVar:
 ;;createVar: creates a variable
@@ -38,10 +42,7 @@ createVar:
 	 or a
 	 sbc hl,de	;check if I have enough RAM
 	pop de		;this is the 'real' requested size
-	jr nc,_mkVAT
-_memError:
-	scf
-	ret			;return carry set for error
+    ErrorOutC(eMemory,eMem_OutOfRAM)
 _mkVAT:
 	push de
 	 ld hl,(varsLowEnd)
@@ -181,8 +182,7 @@ findVar:
 _typeLoop:
 	ld de,(VATEnd)
 	call cpHLDE		;should be equal if just past end
-	scf
-	ret z			;return carry for error
+	ErrorOutZ(eMemory,eMem_NoSuchVar)
 	ld de,OPN
 	ld a,(de)
 	cp (hl)
@@ -233,58 +233,46 @@ runProg:
 ;;Modifies:
 ;;	All
 	call findVar
-	ret c			;if we can't find it, can't run it- error
+    ErrorOutC(eMemory,eMem_NoSuchVar)
 	or a
-	scf
-	ret nz			;not in RAM?  Can't do that.  Not yet, anyway.
-_existsAndFound:
-;now we check the type :D
+    ErrorOutNZ(eRuntime,eRuntime_Unimplemented) ;program is not in RAM
+_existsAndFound:    ;check minimum OS version
+    inc hl
+    inc hl      ;->version
+    ld a,(hl)
+    inc hl
+    ld h,(hl)
+    ld l,a
+    ex de,hl
+    call getOSVersion
+    call cpHLDE
+    jr nc,_versionOK
+    call deAllocVar ;Need to clean up
+    ErrorOut(eRuntime,eRuntime_BadVersion)
+_versionOK:         ;check type and dispatch as applicable
 	ld a,(de)
 	cp VtProgNRP
-	scf
-	ret nz			;haven't implemented DRP or FRP handling yet
-.echo "DRP and FRP handling needs to be implemented\n"
-_handleNRP:
+    jr z,_handleNRP
+    cp VtProgDRP
+    jr z,_handleDRP
+_handleFRP:
+    ErrorOut(eRuntime,eRuntime_Unimplemented)
+
+_handleNRP: ;==== NRP runtime handler ====
 	call peekAllocStack
 	add hl,de		;bottom of free space
-	ld de,$8100	;where I need to be
+	ld de,$8100	    ;where it needs to be
 	ex de,hl
 	or a
 	sbc hl,de
-	ret c			;HL>DE, which means something is allocated in the space we need- error out
+    ErrorOutC(eMemory,eMem_Allocation)  ;something already allocated there
+;allocate and run
 	ld hl,$8100
-_allocMyProg:
 	call allocVarHL
 	ret c
-_parseHeader:
-	inc hl
-	inc hl		;->numDeps (no DRPs allowed here)
-	ld a,(hl)
-	or a
-	jr nz,_headerError
-.echo "Dependency handling needs implementing\n"
-	inc hl
-;;Major note: may be able to optimize by comparing HL to required version directly
-;;with a call to cpHLDE- ld a,(hl) \ inc hl \ ld h,(hl) \ ld l,a \ ex de,hl \ call getOSVersion \ call cpHLDE
-;;Investigate that.
-	ex de,hl
-	call getOSVersion
-	ld a,(de)
-	inc h
-	cp h
-	jr nc,_headerError	;major version must be >= required
-	inc de
-	ld a,(de)
-	inc l
-	cp l
-	jr c,_headerIsOK	;same case as above
-_headerError:
-	call deAllocVar
-	scf
-	ret
-;in the future:
-	;RetError(IncompatibleBinary)
-_headerIsOK:
 	call $8100
 	or a
 	ret
+    
+_handleDRP: ;==== DRP runtime handler ====
+    ErrorOut(eRuntime,eRuntime_Unimplemented)
