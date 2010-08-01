@@ -198,18 +198,18 @@ putSpriteLCD:
 	push iy
 	push af
 	 and 7
-	 ld c,a		;shift counter
-	 ld a,%00000111	;Y auto-increment mode
+	 ld c,a         ;shift counter
+	 ld a,%00000111 ;Y auto-increment mode
 	 call LCDComm
 	 pop af
 	srl a
 	srl a
-	srl a		;division by 8
+	srl a           ;division by 8
 	or %00100000	;set LCD Y command
 	call LCDComm
 	ld iyh,a
 	ld a,l
-	or %10000000	;set LCD X
+	or %10000000    ;set LCD X
 	ld iyl,a
 _updateRow:
 	call LCDComm
@@ -227,7 +227,7 @@ _spriteShiftL:
 	jr nz,_spriteShiftL
 _alignedSprite:
 	setCol()
-	in a,($11)	;dummy read
+	in a,($11)      ;dummy read
 	in a,($11)
 	ld h, a
 	in a,($11)
@@ -235,16 +235,16 @@ _alignedSprite:
 	setCol()
 	ld a,d
 	xor h
-	call LCDWait	;if it's not ready, it ignores our write command == bad
+	call LCDWait	;wait until ready for data
 	out ($11),a
 	ld a,e
 	xor l
 	call LCDWait
 	out ($11),a
-	inc iyl		;next row
+	inc iyl         ;next row
 	ld a,iyl
 	djnz _updateRow
-	ld a,%000000101	;back to X auto-increment mode
+	ld a,%000000101 ;back to X auto-increment mode
 	call LCDComm
 	pop iy
 	ret

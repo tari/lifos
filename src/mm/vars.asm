@@ -208,7 +208,7 @@ _nameCopyLoop:
 	inc hl
 	inc hl			;now actual header, not size
 	or a
-	ret
+	ret             ;clean exit
 	
 .module findVar
 ;;findVar: finds a variable

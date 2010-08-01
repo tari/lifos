@@ -26,5 +26,5 @@ waitKey:
 	or a
 	jr z,waitKey
 	ret
-
+    
 .echo "keypad.asm      "\.echo $-keypad_begin\.echo " bytes\n"

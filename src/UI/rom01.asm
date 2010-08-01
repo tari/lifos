@@ -3,27 +3,27 @@ UI_MAIN:
 #IFNDEF UNIT_TEST
 	set textToBuf,(IY+0)
 	call clrLCD
-	
+	;Horizontal delimiters
 	ld l,8
 	call horizLine
 	ld l,64-13
 	call horizLine
-	
+	;URL and general pimping
 	ld hl,$3400
 	ld (xyCoords),hl
 	ld hl,URLPlug
 	call sPutS
-
+    ;OS version string
 	ld hl,0
 	ld (xyCoords),hl
 	ld hl,$0064
 	call putS
-	
+	;TI-8 prefix on hardware version
 	ld hl,$0900
 	ld (xyCoords),hl
 	ld hl,TI8x
 	call sPutS
-
+    ;Hardware version suffix
 	call getHardVersion
 	ld l,a
 	ld h,0
@@ -35,12 +35,12 @@ UI_MAIN:
 	ld de,modelStrs
 	add hl,de
 	call sPutS
-	
+	;Boot code version prefix
 	ld hl,$0F00
 	ld (xyCoords),hl
 	ld hl,bootVer
 	call sPutS
-	
+	;Boot code version number
 	ld hl,4
 	call mAlloc
 	jr nc,_allocOK
@@ -56,7 +56,7 @@ _allocOK:
 	ex de,hl
 	call sPutS
 	call popAllocStack
-
+    ;Logo
 _putLogo:
 	ld hl,dispBuf+(12*18)+9
 	ld ix,LIFOSLogo
@@ -88,10 +88,10 @@ modelStrs:
 	.db "4+   ",0
 	.db "4+ SE",0
 URLPlug:
-	.db "HTTP://LIFOS.SF.NET/ FOR",$D
-	.db "UPDATES AND NEWS.",0
+	.db "Updates and news at",$D
+	.db "http://lifos.taricorp.net",0
 bootVer:
-	.db "BOOT CODE ",0
+	.db "Boot code ",0
 bootVerAllocFailed:
 	.db "-ALLOC FAILED",0
 LIFOSLogo:
