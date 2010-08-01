@@ -22,6 +22,7 @@ rERROROUT:
 	ld (errorCodes),hl
 	pop hl
 	ret
+    code_overflow(0018h)
 
 .org 0018h
 	ret
@@ -34,7 +35,8 @@ rLCDWAIT:
 	jr c,$0021	;24
 	pop af		;26
 	ret			;27
-
+    code_overflow(0028h)
+    
 .org 0028h
 	;jp DEPMACRO
 	ret
@@ -57,25 +59,7 @@ rLCDWAIT:
 ;OS version string
 	.db LIFOS_VER,0
 
-_initOKStr:
-.db " init OK!",$D,0
-OS_MAIN:    ;link debugging! woo!
-    ld a,0
-    call dispAHex
-    ld hl,_initOKStr
-    call putS
-_recvLoop:
-    in a,(0)
-    and 3
-    cp 3
-    jr z, _recvLoop
-    call recvAByte
-    jr c,_end
-    call dispAHex
-_end:
-    jr $
-    .dw 0
-
+OS_MAIN:
 
 	ld a,1
 	out (6),a
