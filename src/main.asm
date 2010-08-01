@@ -54,7 +54,7 @@
 #DEFCONT        \   ErrorOut(EMain_T,ESub_T)
 #DEFCONT        \   @
 #DEFINE     ErrorOutNZ(EMain_T,ESub_T) jr z,{@}
-#DEFCONT        \   ErrorOut(EMain_T_ESub_T)
+#DEFCONT        \   ErrorOut(EMain_T,ESub_T)
 #DEFCONT        \   @
 
 #DEFINE NUM_SYSCALLS	26

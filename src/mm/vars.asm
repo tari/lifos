@@ -3,8 +3,8 @@
 ;;	Assembled to run only from $8100 in RAM
 ;;Fully relocatable (FRP):
 ;;	May be run from anywhere in RAM (uses relative references only)
-;;DRP (dynamically relocatable)::
-;;	May be run from anywhere in RAM, but must first be dynamically modified by the OS
+;;DRP (dynamically relocatable):
+;;	May be run from anywhere in RAM, but must first be dynamically linked by the OS
 ;;	to account for absolute data references.
 ;;
 ;;VAT entry spec:
@@ -16,12 +16,54 @@
 ;;  size | 2        | Variable size (including header)
 ;;  version | 2     | Minimum OS version
 ;;==== Special entries valid only for DRPs ====
+;;TDS: transient data segment- linked in after program code and initialized
+;;     to all 0.
+;;PDS: persistent data segment- is stored elsewhere and preserved across
+;;     program invocations.  Linked in after the TDS.
 ;;==== Current DRP header version: 0       ====
-;;  headerv | 1     | DRP header version
-;;  pdssize | 2     | Size of PDS
-;;  pdssig  | 4     | PDS signature
-;;  vdssize | 2     | Size of VDS
-;;  data    | size  | Program code- main entry point
+;;  headerv | 1     | DRP header version (flags, too?)
+;;  pdssize | 1     | Size of PDS    \Optional?  headerv could flag presence of
+;;  pdssig  | 4     | PDS signature  |PDS and VDS, allowing them to be omitted.
+;;  tdssize | 2     | Size of TDS    /
+;;  data    | n     | Program code- main entry point
+;;==== Linker Notes                        ====
+;;The linker first calls allocVar at the lowest available location in user
+;;memory, then allocates a chunk of memory after that for the VDS.  The PDS
+;;file with matching signature will be allocated immediately following the VDS,
+;;and a PDS file will be created first if it does not exist.
+;;Finally, the linker creates the ULS (unlink segment) for its own use.
+;;
+;;Beginning at the main entry point, the reassembling linker traces program
+;;flow from the main entry point, locating relink markers, likely a rarely-used
+;;but legal instruction (`ld a,a', etc?) followed by relative address (offset
+;;from 0x0000).  Various relink markers are modified to become absolute
+;;references, perhaps `ld a,a' (0x7F) becomes `call' (0xCD), and the base link
+;;address of this instance of the program is added to the immediately following
+;;constant, resulting in a valid absolute reference.  The address of the relink
+;;marker is then appended to the ULS so the reassembly can be undone when the
+;;program exits.
+;;
+;;Possible table of relocation markers:
+;; ld b,b       -> ld bc,nnnn
+;; ld d,d       -> ld de,nnnn
+;; ld h,h       -> ld hl,nnnn
+;; ld c,c       -> ld bc,(nnnn)
+;; ld e,e       -> ld de,(nnnn)
+;; ld l,l       -> ld hl,(nnnn)
+;; ld a,a       -> jp nnnn
+;; ld (hl),(hl) -> call nnnn
+;;
+;;Example: [p+n] is n bytes from the program entry point
+;; Program loaded at 0x81C2, with call to p+0x72F and reference to p+0x1024
+;; (which, for demonstration, can be in the PDS) by HL immediately following.
+;;Assembled/stored as:
+;; ld (hl),(hl)
+;; .dw 0x72F
+;; ld h,h
+;; .dw 0x1024
+;;Linked as:
+;; call 0x88F1
+;; ld hl,0x91E6
 
 createVar:
 ;;createVar: creates a variable

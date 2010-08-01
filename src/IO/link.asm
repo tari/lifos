@@ -50,7 +50,7 @@ _sendAckWait:	;wait for other line low (ACK)
 	dec de
 	ld a,d
 	or e
-	jp nz_sendAckWait
+	jp nz,_sendAckWait
 	jr LINK_TIMEOUT
 _sendBitDone:
 	xor a
