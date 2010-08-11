@@ -91,4 +91,3 @@ _bitLoopback:
 .endmodule
 
 __link_end:
-.echo "link.asm      "\.echo $-__link_begin\.echo " bytes\n"

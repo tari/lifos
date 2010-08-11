@@ -1,5 +1,6 @@
+;Routine: SYSINT
+;The interrupt-mode 1 ISR.
 .module sysint
-;the IM 1 ISR
 SYSINT:
 	ex af,af'
 	exx
@@ -9,8 +10,8 @@ SYSINT:
 	bit 4,a
 	jr nz,_linkIntTriggered
 	jr _exitInt
-_onIntTriggered:
-	
+_onIntTriggered:        ;Interrupt fired by ON key
+;TODO: this murders any key mask.. what to do with it?
 	ld a,$FD
 	out (1),a
 	nop
@@ -45,4 +46,4 @@ _exitInt:
 	ex af,af'
 	exx
 	ei
-	reti	;I don't know how much of this is actually necessary, but TI uses all of it	
+	reti

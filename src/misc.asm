@@ -1,6 +1,8 @@
 ;miscellaneous utility syscalls
 misc_begin:
 
+;Function: pushAll
+;Pushes AF, BC, DE, HL and IX onto the stack.
 pushAll:
 	ex (sp),hl	;this gives me my return address and pushes hl
 	push af
@@ -10,7 +12,9 @@ pushAll:
 	push hl		;save return address
 	ret
 
-
+;Function: popAll
+;Gets saved register values back from a previous <pushAll>.  The stack
+;must be in the same state as it was at the initial push.
 popAll:
 	pop hl
 	pop ix
@@ -22,14 +26,18 @@ popAll:
 
 
 .module check16
-;;check16: calculates a 16-bit checksum
-;;Inputs:
-;; HL->area to checksum
-;; BC=size of (HL)
-;;Outputs:
-;; HL=checksum
-;;Modifies:
-;; AF,BC,DE
+;Function: check16
+;Calculates the 16-bit modular checksum of a block of memory.
+;
+;Inputs:
+; HL - pointer to the block to checksum
+; BC - size of block at (HL)
+;
+;Outputs:
+; HL - checksum value
+;
+;Modifies:
+; AF, BC, DE, HL
 check16:
 	ld d,0
 	push hl
@@ -48,27 +56,38 @@ _loop:
 	pop hl
 	ret
 
-
+;Function: coordsReset
+;Resets the text render coordinates <xyCoords> to (0,0).
+;
+;Modifies:
+; HL
 coordsReset:
 	ld hl,0
 	ld (xyCoords),hl
 	ret
 
-
+;Function: getOSVersion
+;Gets version information about the currently running OS.
+;
+;Outputs:
+; H - <LIFOS_VER_MAJOR>
+; L - <LIFOS_VER_MINOR>
+; A - <LIFOS_VER_BUILD>
 getOSVersion:
 	ld hl,(256*LIFOS_VER_MAJOR)+LIFOS_VER_MINOR
 	ld a,LIFOS_VER_BUILD
 	ret
 
-;;swapRAM: swap two blocks of RAM
-;;Inputs:
-;; HL->first block
-;; DE->second block
-;; BC=size of blocks
-;;Outputs:
-;; Blocks swapped
-;;Modifies:
-;; AF,BC,DE,HL
+;Function: swapRAM
+;Swaps two blocks of RAM.
+;
+;Inputs:
+; HL - pointer to first block
+; DE - pointer to second block
+; BC - size of blocks to swap
+;
+;Modifies:
+; AF, BC, DE, HL
 swapRAM:
 	ld a,(de)
 	push af
@@ -84,13 +103,17 @@ swapRAM:
 	jr nz,swapRAM
 	ret
 
-;;strLen: get the length of a null-terminated string
-;;Inputs:
-;; HL->string
-;;Outputs:
-;; B=length (excluding terminator)
-;;Modifies:
-;; AF,B
+;Function: strLen
+;Find the length of a null-terminated string.
+;
+;Inputs:
+; HL - pointer to string
+;
+;Outputs:
+; B - length of string at (HL), excluding null terminator
+;
+;Modifies:
+; AF, B
 strLen:
     push hl
     ld b,$FF
@@ -103,19 +126,22 @@ _strLenLoop:
     pop hl
     ret
     
-;;compStrs: compare two strings
-;;CHECKME: is cpir just as useful?
-;;Inputs:
-;; HL->first string
-;; DE->second string
-;; B=string length
-;;Outputs:
-;; ZF if strings are same
-;; CF if (HL)>(DE)
-;; NCF if (DE)>(HL)
-;;Modifies:
-;; AF,B,DE,HL
+;Function: memCmp
+;Lexicographically compare two blocks of memory.
+;
+;Inputs:
+; HL - pointer to first block
+; DE - pointer to second block
+; B - size of block to compare
+;
+;Outputs:
+; Z flag - set if blocks are equal
+; C flag - set if (HL) > (DE), else reset.  State is meaningless if Z is set.
+;
+;Modifies:
+; AF, B, DE, HL
 compStrs:
+;TODO: might cpir be useful here?
 	ld a,(de)
 	cp (hl)
 	ret nz
@@ -124,14 +150,17 @@ compStrs:
 	djnz compStrs
 	ret
 
-
-cpHLDE:
-	or a
-	sbc hl,de
-	add hl,de
-	ret
-
-
+;Function: rand8
+;Generate a pseudo-random 8-bit number.
+;
+;Outputs:
+; A - generated number
+;
+;Modifies:
+; AF, B
+;
+;See Also:
+; <randSeed>
 .module rand8
 rand8:
 	push	hl
@@ -155,7 +184,14 @@ _loop:
 	pop	hl
 	ret
 
-	
+;Function: getHardVersion
+;Gets the hardware revision which is currently running (83+, 84+, etc).
+;
+;Outputs:
+; A - <calcType> code for the current hardware.
+;
+;Modifies:
+; AF
 getHardVersion:
 	in a,(2)
 	bit 7,a
@@ -172,14 +208,4 @@ getHardVersion:
 	inc a
 	ret
 	
-;;is83PBE: returns nz if 83+, z otherwise
-is83PBE:
-	push bc
-	 push af
-	  in a,(2)
-	  bit 7,a	;reset on 83PBE
-	  pop bc
-	 ld a,b
-	 pop bc
-	ret
 .echo "misc.asm:	"\.echo $-misc_begin\.echo " bytes\n"

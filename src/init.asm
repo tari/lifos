@@ -11,6 +11,10 @@ init_begin:
 ;PRIV_ROM = $7C
 ;#ENDIF
 
+;Routine: Boot
+;Initializes system hardware and software to a known-good state.
+;Called by either jumping to <rREBOOT> or the boot code entry point at 0x0056,
+;then vectors to <OS_MAIN> when done.  This routine does not return.
 .module boot
 ;basically this entire module was ripped off of PongOS
 Boot:

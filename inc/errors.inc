@@ -17,3 +17,4 @@ eLink_Generic	= 02h
 ;==eRuntime
 eRuntime_BadVersion     = 01h
 eRuntime_Unimplemented  = 02h
+eRuntime_BadType        = 03h

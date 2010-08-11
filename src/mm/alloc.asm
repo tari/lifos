@@ -1,13 +1,20 @@
 ;memory allocation syscalls
 
+;Routine: pushAllocStack
+;Pushes a new entry onto the allocation stack.  Do not use this unless you
+;know exactly what you're doing- use <mAlloc> instead, as this doesn't
+;do any error checking.
+;
+;Inputs:
+; HL - address of block to allocate
+; DE - size of block at (HL)
+;
+;Modifies:
+; HL, DE
+;
+;See Also:
+; <popAllocStack>, <peekAllocStack>, <mAlloc>, <allocSP>
 pushAllocStack:
-;;pushAllocStack: adds an entry to the allocation stack
-;;Inputs:
-;;	HL->requested block of memory
-;;	DE=size of requested block
-;;Modifies:
-;;	HL,DE
-;;Note that this does NO error checking.  AT ALL.  Use mAlloc instead, whenever possible.
 	push de
 	 ex de,hl		;de->requested
 	 ld hl,(allocSP)
@@ -23,11 +30,16 @@ pushAllocStack:
 	ld (allocSP),hl
 	ret
 
-
+;Routine: popAllocStack
+;Removes the top entry from the allocation stack, effectively freeing that
+;block.
+;
+;Modifies:
+; HL
+;
+;See Also:
+; <pushAllocStack>, <peekAllocStack>, <mAlloc>
 popAllocStack:
-;;popAllocStack: removes the top allocation stack entry (deallocates a block of memory)
-;;Modifies:
-;;	HL
 	ld hl,(allocSP)
 	dec hl
 	dec hl
@@ -38,83 +50,111 @@ popAllocStack:
 
 
 .module peekAllocStack
+;Routine: peekAllocStack
+;Returns information about the topmost allocated memory block.
+;
+;Outputs:
+; HL - pointer to block
+; DE - size of block at (HL)
+;
+;Modifies:
+; AF
+;
+;See Also:
+; <pushAllocStack>, <popAllocStack>, <mAlloc>
 peekAllocStack:
-;;peekAllocStack: provides information about the top allocated block
-;;Outputs:
-;;	HL->top allocated block
-;;	DE=size of (HL)
-;;Modifies:
-;;	AF
 ;stack entry = size, then pointer
 	ld hl,(allocSP)
 	ld de,allocStackBegin
-	call cpHLDE
+	rst rCPHLDE
 	jr z,_nothing
 	dec hl
 	ld d,(hl)
 	dec hl
-	ld e,(hl)	;de=size
+	ld e,(hl)	    ;Size
 	dec hl
-	push af
-	 ld a,(hl)
-	 dec hl
-	 ld l,(hl)
-	 ld h,a		;hl=ptr
-	 pop af
+    dec hl
+	rst rLDHLIND    ;Ptr
 	ret
 _nothing:
-	ld hl,$8000
+    ;HL is already allocStackBegin
 	ld de,0
 	ret
+.endmodule
 
 
+;Routine: mAlloc
+;Allocates a block of memory for general use.
+;
+;Inputs:
+; HL - number of bytes to allocate
+;
+;Outputs:
+; HL - pointer to allocated block
+;
+;Modifies:
+; AF, DE, HL
+;
+;Errors:
+; eMem_OutOfRAM - not enough free RAM to allocate a block of the requested
+;                 size.
 mAlloc:
-;;mAlloc: allocates a block of memory
-;;Inputs:
-;;	HL=amount of memory to allocate
-;;Outputs:
-;;	HL->allocated block
-;;	Carry set if problems
-;;Modifies:
-;;	AF,DE,HL
 	push hl
 	 call getFreeRAM	;hl=free
 	 pop de
-	call cpHLDE	;carry set if DE>HL, so..
-	ret c		;fail if requested>available
+	rst rCPHLDE
+    ErrorOutC(eMemory, eMem_OutOfRAM)   ;requested > available
 	push de
 	 call peekAllocStack
 	 add hl,de	;hl->free space
 	 pop de
 	call pushAllocStack
 	call peekAllocStack
-	or a	;ensure I exit with carry reset
-	ret
+	CleanExit()
     
-;;allocVar: allocates a variable
-;;Inputs:
-;;    OPN=var name
-;;Outputs:
-;;	HL->data block
-;;	DE=size of allocated block
-;;	Variable allocated
-;;	Returns eMemory:eMem_OutOfStack/eMem_NoSuchVar if problems
-;;Modifies:
-;;	AF, BC, DE, HL, IX, OSRAM-(OSRAM+5)
+;Routine: allocVar
+;Moves a variable in RAM from upper memory into an allocated block.
+;
+;VAT fixup is not yet implemented, so it'll break things unless the chosen
+;variable is the lowermost thing in upper RAM.
+;
+;Inputs:
+; <OPN> - variable type and name
+;
+;Outputs:
+; HL - pointer to variable in new location
+; DE - size of block at (HL)
+;
+;Modifies:
+; AF, BC, DE, HL, IX, <OSRAM>
+;
+;Errors:
+; eMem_OutOfStack - insufficient space to swap memory across the stack
 allocVar:
     call peekAllocStack
     add hl,de
-;;AllocVarHL: just like allocVar
-;;Inputs:
-;;    HL=address to allocate at
+;Routine: allocVarHL
+;Allocate a variable as in <allocVar>, but to the given location rather than
+;first available block.  Don't use without very good reason.
+;
+;Inputs:
+; HL - address to allocate at
+;
+;See Also:
+; <allocVar>
 allocVarHL:
 .module allocVar
+
+_writeToBlock .EQU OSRAM        ;running pointer for the var being moved
+_readFromBlock .EQU OSRAM+2     ;ditto
+_copySize .EQU OSRAM+4          ;remaining size of ""
+
     ld (_writeToBlock),hl
 _allocateBlock:
 ;error checking
     call freeStackSpace
-;Needs 128 byte buffer, 1 word for any ISR, 2 words scrap, and 1 word safety-net
-    ld hl,128+8
+;Needs 128 byte buffer, 1 word for any ISR, 4 words scrap, and 1 word safety-net
+    ld hl,128+12
     or a
     sbc hl,bc
     ErrorOutC(eMemory,eMem_OutOfStack)
@@ -123,17 +163,13 @@ _enoughStack:
 	jr nc,_exists
     ErrorOut(eMemory,eMem_NoSuchVar)
 _exists:
-    push de		;save VAT pointer for fixing it later
+    push de		;save VAT pointer for fixup later
     ld (_readFromBlock),hl
     ld a,(hl)
     inc hl
     ld h,(hl)
     ld l,a
     ld (_copySize),hl
-    
-_writeToBlock .EQU OSRAM        ;running pointer for the var being moved
-_readFromBlock .EQU OSRAM+2     ;ditto
-_copySize .EQU OSRAM+4          ;remaining size of ""
     ld (_writeToBlock),de
     ld (_copySize),bc
 _loop:
@@ -141,10 +177,10 @@ _loop:
     ld bc,128
     or a
     sbc hl,bc
-    ld (_copySize),hl ;no way bit 15 should be set unless we've underflowed
+    ld (_copySize),hl
     jr nc,_loopSizeOK
-    ld bc,(_copySize)
-_loopSizeOK:    ;bc=amount being moved
+    ld bc,(_copySize)       ;sbc underflowed, so < 128 bytes left to swap
+_loopSizeOK:                ;bc=amount being moved
     ld hl,(_readFromBlock)
     call saveBlockToStack   ;saved block - now shift everything else up
 _shiftOthersUp:
@@ -187,7 +223,8 @@ _moveComplete:  ;update this var's VAT entry
 _fixVAT:    ;update the VAT entries of everything in user memory
     ld hl,VAT_begin
 _fixLoop:
-    
+.warn "VAT fixup in allocVar needs implementing"
+    ;TODO: eep
 _done:
 	call peekAllocStack
 	ret			;finished!!

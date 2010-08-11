@@ -39,11 +39,39 @@
 #DEFCONT		\	.page (4*xx)+1
 #DEFCONT		\	.page (4*xx)+2
 #DEFCONT		\	.page (4*xx)+3
-#DEFINE		CleanExit() ret
-#DEFINE		ErrorOut(EMain_T) rst rERROROUT
-#DEFCONT		\	.dw 256*eMinor_Undef + eMain_T
-#DEFINE     ErrorOut(EMain_T,ESub_T) call EOUT_MACRO
+;Macro: CleanExit()
+;Clean exit shortcut- resets carry flag and returns normally.
+#DEFINE		CleanExit() or a \ ret
+;Macro: ErrorOut(EMain_T)
+;Fails out with the given major error number and minor <eMinor_Undef>.
+;
+;See Also:
+;<ErrorOut(EMain_T,ESub_T)>
+#DEFINE		ErrorOut(EMain_T) ErrorOut(EMain_T, eMinor_Undef)
+;Macro: ErrorOut(EMain_T,ESub_T)
+;Returns failure status from the current routine by setting carry and loading
+;the given error numbers into <errorCodes>, then returning to the parent
+;call.  The stack must be in the same state it was upon entry to the current
+;routine.
+;
+;See Also:
+;<rERROROUT>, <CleanExit()>, <Conditional ErrorOut>
+#DEFINE     ErrorOut(EMain_T,ESub_T) rst rERROROUT
 #DEFCONT        \   .dw 256*eSub_T + eMain_T
+;Macros: Conditional ErrorOut
+;Errors out (via <ErrorOut(EMain_T,ESub_T)>) if the chosen condition is true,
+;otherwise continues normally.
+;Inlined, but roughly equivalent to the following:
+; >     jr cc,_failOut
+; > ;other code
+; > ;...
+; > _failOut:
+; >     ErrorOut(EMain_T,ESub_t)
+;
+;ErrorOutC - Errors out if carry is set.
+;ErrorOutNC - Errors out if carry is reset.
+;ErrorOutZ - Errors out if zero flag is set.
+;ErrorOutNZ - Errors out if zero flag is reset.
 #DEFINE     ErrorOutC(EMain_T,ESub_T) jr nc,{@}
 #DEFCONT        \   ErrorOut(EMain_T,ESub_T)
 #DEFCONT        \   @
@@ -57,11 +85,20 @@
 #DEFCONT        \   ErrorOut(EMain_T,ESub_T)
 #DEFCONT        \   @
 
+;Constant: NUM_SYSCALLS
+;The number of syscalls defined currently, used to calculate the starting
+;point of the syscall vector table.
 #DEFINE NUM_SYSCALLS	26
+;Constants: Version numbering
+;LIFOS_VER - String describing the version, such as "LIFOS 0.4.1b"
+;LIFOS_VER_MAJOR - Major version number
+;LIFOS_VER_MINOR - Minor version number
+;LIFOS_VER_BUILD - Build number
 #DEFINE LIFOS_VER "LIFOS 0.1.2a"
 #DEFINE LIFOS_VER_MAJOR 0
 #DEFINE LIFOS_VER_MINOR 1
 #DEFINE LIFOS_VER_BUILD 2
+
 #DEFINE CALCTYPE ct83PBE
 ;#DEFINE UNIT_TEST
 

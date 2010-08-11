@@ -51,7 +51,7 @@
 ;; ld e,e       -> ld de,(nnnn)
 ;; ld l,l       -> ld hl,(nnnn)
 ;; ld a,a       -> jp nnnn
-;; ld (hl),(hl) -> call nnnn
+;; ld (hl),(hl) -> call nnnn (sigh, this is `halt', isn't it?)
 ;;
 ;;Example: [p+n] is n bytes from the program entry point
 ;; Program loaded at 0x81C2, with call to p+0x72F and reference to p+0x1024
@@ -65,14 +65,23 @@
 ;; call 0x88F1
 ;; ld hl,0x91E6
 
+;Routine: createVar
+;Creates a new variable in RAM.
+;
+;Inputs:
+; HL - requested variable size (includes header but not size word)
+; OPN - variable type and 10-byte name
+;
+;Outputs:
+; HL - pointer to variable data just past size word
+;
+;Modifies:
+; AF, BC, DE, HL
+;
+;Errors:
+; eMem_OutOfRAM - not enough free RAM to create variable
 createVar:
-;;createVar: creates a variable
-;;Inputs:
-;;	HL=requested size of var (must include header for programs, doesn't count size word)
-;;	(OPN)=variable type,11 byte name (preceded by type byte)
-;;Outputs:
-;;	HL->variable data block+2 (just past size word)
-;returns HL->data block, so our header can be filled in by them
+;TODO: test me
 	push hl		;save var size
 	 call getFreeRAM
 	pop de
@@ -115,11 +124,10 @@ _lddrSkip:
 	 ld (varsLowEnd),hl	;fixed varsLowEnd to account for the shift
 _vatShiftUpdate:		;account for the shift down of all vars in RAM
 ;need to account for allocated vars, too (don't 'fix'/break them)
-	 call pushall		;easiest way to shove this in here
 	  ld hl,usrRAM_top	;VAT begins
 _shiftUpdateLoop:
 	  ld de,(VATEnd)
-	  call cpHLDE
+	  rst rCPHLDE
 	  jr z,_shiftUpdateDone
 ;we found a VAT entry
 	  dec hl		;HL->page
@@ -137,7 +145,7 @@ _shiftUpdateLoop:
 	    ex de,hl
 	    inc de
 	    pop hl		;DE->last entry on alloc stack+1, HL=address of var
-	   call cpHLDE	;if HL<DE, jump
+	   rst rCPHLDE	;if HL<DE, jump
 	   ex de,hl		;DE=address of var
 	   pop hl		;pointer to address is back
 	  jr c,_shiftUpdateAllocated
@@ -160,7 +168,6 @@ _shiftUpdateNext:
 	  add hl,de
 	  jr _shiftUpdateLoop
 _shiftUpdateDone:
-	  call popall
 	 pop de
 	inc de
 	inc de			;account for the size word in all remaining calculations :)
@@ -176,7 +183,7 @@ _mkData:
 	 add hl,de
 	 ld (varsLowEnd),hl
 _writeData:
-	 pop de
+	 pop de         ;size word
 	inc hl
 	ld (hl),e
 	inc hl
@@ -207,23 +214,30 @@ _nameCopyLoop:
 	ex de,hl		;swap, so DE->variable header
 	inc hl
 	inc hl			;now actual header, not size
-	or a
-	ret             ;clean exit
-	
+	CleanExit()
+
+;Routine: findVar
+;Finds a stored variable.
+;
+;Inputs:
+; <OPN> - type and name of variable.  Names are always 10 bytes, no terminator.
+;
+;Outputs:
+; HL - pointer to variable data block
+; DE - pointer to VAT entry
+; A - Flash page var begins on, or 0 if in RAM
+;
+;Modifies:
+; AF, BC, DE, HL
+;
+;Errors:
+; eMem_NoSuchVar - variable of specified type and name does not exist
 .module findVar
-;;findVar: finds a variable
-;;Inputs:
-;;	OPN=variable type+name (11 bytes)
-;;Outputs:
-;;	HL->variable data block
-;;	DE->VAT entry
-;;	A=page (or 0 if in RAM)
-;;	Returns carry set if var not found
 findVar:
 	ld hl,VAT_begin
 _typeLoop:
 	ld de,(VATEnd)
-	call cpHLDE		;should be equal if just past end
+	rst rCPHLDE		;should be equal if just past end
 	ErrorOutZ(eMemory,eMem_NoSuchVar)
 	ld de,OPN
 	ld a,(de)
@@ -264,21 +278,41 @@ _nameFindHit:
 _nameFindMiss:
 	 pop hl
 	jr _typeFail
+.endmodule
 
+;Routine: runProg
+;Executes a program stored in RAM (Flash not yet implemented).
+;
+;Inputs:
+; OPN - variable name and type
+;
+;Outputs:
+; Program executed.
+;
+;Modifies:
+; Potentially all, including user memory.
+;
+;Errors:
+; eRuntime_BadType - variable is not executable or has an unknown type.
+; eMem_NoSuchVar - variable does not exist.
+; eRuntime_Unimplemented - some requested feature is not yet implemented.
+;                          Currently, var is in Flash or is not a NRP.
+; eRuntime_BadVersion - program header requires a newer version of OS than
+;                       the currently running one.
+; eMem_Allocation - impossible to allocate block at $8100 for NRP.
 .module runProg
 runProg:
-;;runProg: executes a program stored in RAM
-;;Inputs:
-;;	OPN=variable name+type
-;;Outputs:
-;;	Carry set if unable to execute
-;;Modifies:
-;;	All
+_typeCheck:         ;Verify executability
+    ld a,(OPN)
+.warn "Type byte executable bit isn't official"
+    bit 7,a
+    ErrorOutZ(eRuntime,eRuntime_BadType)
+_locate:
 	call findVar
-    ErrorOutC(eMemory,eMem_NoSuchVar)
-	or a
-    ErrorOutNZ(eRuntime,eRuntime_Unimplemented) ;program is not in RAM
-_existsAndFound:    ;check minimum OS version
+    ret c           ;Pass along error
+	or a            ;Check page
+    ErrorOutNZ(eRuntime,eRuntime_Unimplemented)
+_versionCheck:      ;Check minimum OS version
     inc hl
     inc hl      ;->version
     ld a,(hl)
@@ -287,16 +321,18 @@ _existsAndFound:    ;check minimum OS version
     ld l,a
     ex de,hl
     call getOSVersion
-    call cpHLDE
-    jr nc,_versionOK
-    call deAllocVar ;Need to clean up
-    ErrorOut(eRuntime,eRuntime_BadVersion)
-_versionOK:         ;check type and dispatch as applicable
+    rst rCPHLDE     ;DE (needed) > HL (running)?
+    ErrorOutC(eRuntime,eRuntime_BadVersion)
+_versionOK:         ;Dispatch type
 	ld a,(de)
 	cp VtProgNRP
     jr z,_handleNRP
     cp VtProgDRP
     jr z,_handleDRP
+    cp VtProgFRP
+    jr z,_handleFRP
+    ErrorOut(eRuntime,eRuntime_BadType)
+    
 _handleFRP:
     ErrorOut(eRuntime,eRuntime_Unimplemented)
 
@@ -318,3 +354,4 @@ _handleNRP: ;==== NRP runtime handler ====
     
 _handleDRP: ;==== DRP runtime handler ====
     ErrorOut(eRuntime,eRuntime_Unimplemented)
+.endmodule

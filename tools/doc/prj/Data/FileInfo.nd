@@ -1,0 +1,27 @@
+1.5
+Assembly
+/cygdrive/f/lifos/src/IO/lfont.asm	1281384018	0	/cygdrive/f/lifos/src/IO/lfont.asm
+/cygdrive/f/lifos/src/UI/rom01.asm	1281384018	0	/cygdrive/f/lifos/src/UI/rom01.asm
+/cygdrive/f/lifos/src/intr.asm	1281450090	1	SYSINT
+/cygdrive/f/lifos/src/IO/keypad.asm	1281384018	0	/cygdrive/f/lifos/src/IO/keypad.asm
+/cygdrive/f/lifos/src/IO/link.asm	1281384018	0	/cygdrive/f/lifos/src/IO/link.asm
+/cygdrive/f/lifos/src/IO/sfont.asm	1281384018	0	/cygdrive/f/lifos/src/IO/sfont.asm
+/cygdrive/f/lifos/src/UI/credits.txt	1281384018	0	/cygdrive/f/lifos/src/UI/credits.txt
+/cygdrive/f/lifos/src/unittest.asm	1281384019	0	/cygdrive/f/lifos/src/unittest.asm
+/cygdrive/f/lifos/src/IO/lfont.h	1281384018	0	/cygdrive/f/lifos/src/IO/lfont.h
+/cygdrive/f/lifos/src/math/fpbasic.asm	1281384019	0	/cygdrive/f/lifos/src/math/fpbasic.asm
+/cygdrive/f/lifos/src/emu/disz80.txt	1281384018	0	/cygdrive/f/lifos/src/emu/disz80.txt
+/cygdrive/f/lifos/src/mm/alloc.asm	1281456259	1	/cygdrive/f/lifos/src/mm/alloc.asm
+/cygdrive/f/lifos/src/pucrunch.asm	1281384019	0	/cygdrive/f/lifos/src/pucrunch.asm
+/cygdrive/f/lifos/src/emu/intrptab.h	1281384018	0	/cygdrive/f/lifos/src/emu/intrptab.h
+/cygdrive/f/lifos/src/rom00.asm	1281390729	1	/cygdrive/f/lifos/src/rom00.asm
+/cygdrive/f/lifos/src/macros.asm	1281450792	0	/cygdrive/f/lifos/src/macros.asm
+/cygdrive/f/lifos/src/emu/core.asm	1281384018	0	/cygdrive/f/lifos/src/emu/core.asm
+/cygdrive/f/lifos/src/mm/memory.asm	1281384019	0	/cygdrive/f/lifos/src/mm/memory.asm
+/cygdrive/f/lifos/src/rom1C.asm	1281384019	0	/cygdrive/f/lifos/src/rom1C.asm
+/cygdrive/f/lifos/src/misc.asm	1281391565	1	/cygdrive/f/lifos/src/misc.asm
+/cygdrive/f/lifos/src/main.asm	1281389146	1	/cygdrive/f/lifos/src/main.asm
+/cygdrive/f/lifos/src/init.asm	1281389099	1	Boot
+/cygdrive/f/lifos/src/IO/display.asm	1281384018	0	/cygdrive/f/lifos/src/IO/display.asm
+/cygdrive/f/lifos/src/mm/vars.asm	1281460743	1	/cygdrive/f/lifos/src/mm/vars.asm
+/cygdrive/f/lifos/src/IO/sfont.h	1281384018	0	/cygdrive/f/lifos/src/IO/sfont.h

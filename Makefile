@@ -1,11 +1,19 @@
 ## Tools
 
 ASS 	= tools/asm/Brass.exe
-EMU 	= tools/emu/pti.sh
 HEX2ROM	= tools/asm/Hex2Rom.exe
-ASMDOC	= tools/doc/asmdoc
-PTI	= tools/emu/pindurti.exe
+ASMDOC	= tools/doc/NaturalDocs
+
+EMU		= tools/emu/pti.sh
+PTI		= tools/emu/pindurti.exe
+SEND 	= tools/emu/send.exe
 LINCALC = tools/emu/lincalc/run.sh
+
+# Don't try to use mono under Cygwin, just run normally
+MONO = mono
+ifeq ($(shell uname -o),Cygwin)
+	MONO = 
+endif
 
 ## Files
 
@@ -19,28 +27,28 @@ HEX	= bin/LIFOS.hex
 
 SOURCED	= src/
 ASMDOCD	= doc/asmdoc/
-LAYOUTD	= doc/layout/
+ASMDOC_PRJD = tools/doc/prj/
 
 ## Targets
 
-default : $(DEPS)
-	chmod +x $(ASS)
-	chmod +x $(HEX2ROM)
-	mono $(ASS) $(MAIN) $(HEX)
-	mono $(HEX2ROM) $(HEX) $(BIN)
+all $(BIN) $(HEX): $(DEPS)
+	chmod +x $(ASS) $(HEX2ROM)
+	$(MONO) $(ASS) $(MAIN) $(HEX)
+	$(MONO) $(HEX2ROM) $(HEX) $(BIN)
 
-run :
-	$(EMU) $(BIN)
+clean:
+	rm -f pti.conf $(BIN) $(HEX)
+	
+run : $(BIN)
+	chmod +x $(PTI) $(SEND)
+	$(PTI) &
+	sleep 1
+	$(SEND) 0 $(BIN)
 
-asmdoc :
-	$(ASMDOC) $(SOURCED) $(ASMDOCD) $(LAYOUTD)
+#TODO: include the inc directory somehow
+asmdoc : $(DEPS)
+	$(ASMDOC) -i $(SOURCED) -o HTML $(ASMDOCD) -p $(ASMDOC_PRJD)
 
-pti :	
-	chmod +x $(PTI)
-	$(PTI)
-	rm -f pti.conf bin/LIFOS.rom.pti
-
-lincalc:
+lincalc: $(DEPS)
 	chmod +x $(LINCALC)
 	$(LINCALC) $(BIN)
-
