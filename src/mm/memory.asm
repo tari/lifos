@@ -94,6 +94,7 @@ saveBlockToStack:
 ;; HL->restore area
 ;; BC=size of block
 ;;Outputs:
+;; HL = (input HL)+(input BC)
 ;; Block restored
 ;;Modifies:
 ;; AF,BC,DE,HL,IX

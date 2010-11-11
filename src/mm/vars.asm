@@ -123,7 +123,6 @@ _lddrSkip:
 	 add hl,de
 	 ld (varsLowEnd),hl	;fixed varsLowEnd to account for the shift
 _vatShiftUpdate:		;account for the shift down of all vars in RAM
-;need to account for allocated vars, too (don't 'fix'/break them)
 	  ld hl,usrRAM_top	;VAT begins
 _shiftUpdateLoop:
 	  ld de,(VATEnd)
@@ -273,8 +272,7 @@ _nameFindHit:
 	 ld e,(hl)	;lsn of addr
 	 pop hl		;VAT entry
 	ex de,hl
-	or a
-	ret
+	CleanExit()
 _nameFindMiss:
 	 pop hl
 	jr _typeFail

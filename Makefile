@@ -38,6 +38,7 @@ all $(BIN) $(HEX): $(DEPS)
 
 clean:
 	rm -f pti.conf $(BIN) $(HEX)
+	rm -rf $(ASMDOCD)
 	
 run : $(BIN)
 	chmod +x $(PTI) $(SEND)
@@ -47,7 +48,8 @@ run : $(BIN)
 
 #TODO: include the inc directory somehow
 asmdoc : $(DEPS)
-	$(ASMDOC) -i $(SOURCED) -o HTML $(ASMDOCD) -p $(ASMDOC_PRJD)
+	mkdir -p $(ASMDOCD)
+	$(ASMDOC) -r -i $(SOURCED) -o HTML $(ASMDOCD) -p $(ASMDOC_PRJD)
 
 lincalc: $(DEPS)
 	chmod +x $(LINCALC)

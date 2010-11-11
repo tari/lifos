@@ -148,6 +148,8 @@ allocVarHL:
 _writeToBlock .EQU OSRAM        ;running pointer for the var being moved
 _readFromBlock .EQU OSRAM+2     ;ditto
 _copySize .EQU OSRAM+4          ;remaining size of ""
+_oldVarAddr .EQU OSRAM+6        ;Initial location of sought variable (pre-move)
+_oldVarVAT .EQU OSRAM+8         ;Target var's VAT pointer
 
     ld (_writeToBlock),hl
 _allocateBlock:
@@ -163,7 +165,8 @@ _enoughStack:
 	jr nc,_exists
     ErrorOut(eMemory,eMem_NoSuchVar)
 _exists:
-    push de		;save VAT pointer for fixup later
+    ld (_oldVarAddr),hl         ;Save location for VAT fixup
+    ld (_oldVarVAT), hl         ;..also our VAT entry for fixup
     ld (_readFromBlock),hl
     ld a,(hl)
     inc hl
@@ -214,7 +217,7 @@ _loopbackChk:
 _moveComplete:  ;update this var's VAT entry
     call peekAllocStack
     ex de,hl   ;DE->allocation block
-    pop hl		;VAT pointer
+    ld hl,(_oldVarVAT)		;VAT pointer
     dec hl
     dec hl
     ld (hl),d	;msb of address
