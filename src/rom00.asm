@@ -78,7 +78,32 @@ rINTR:
 ;Function: OS_MAIN
 ;Main OS entry point.  Mostly just jumps out to UI_MAIN on ROM page 1.
 OS_MAIN:
+    ld hl,var1
+    call mov11ToOPN
+    ld hl,2
+    call createVar
+    ld (hl),0FFh
+    inc hl
+    ld (hl),0FFh
+    
+    ld hl,var2
+    call mov11ToOPN
+    ld hl,2
+    call createVar
+    ld (hl),05Ah
+    inc hl
+    ld (hl),0A5h
+    
+    ld hl,var1
+    call mov11ToOPN
+    call allocVar
+    jr $
 
+var1:
+    .db 0,"1         "
+var2:
+    .db 0,"2         "
+    
 	ld a,1
 	out (6),a
 	jp UI_MAIN

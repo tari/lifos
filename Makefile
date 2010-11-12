@@ -37,10 +37,11 @@ all $(BIN) $(HEX): $(DEPS)
 	$(MONO) $(HEX2ROM) $(HEX) $(BIN)
 
 clean:
-	rm -f pti.conf $(BIN) $(HEX)
+	rm -f pti.conf tools/emu/pti.conf $(BIN) $(HEX)
 	rm -rf $(ASMDOCD)
 	
 run : $(BIN)
+	rm -f pti.conf tools/emu/pti.conf bin/LIFOS.rom.pti
 	chmod +x $(PTI) $(SEND)
 	$(PTI) &
 	sleep 1

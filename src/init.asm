@@ -27,8 +27,8 @@ Boot:
 	out (3),a		; default interrupt
 	ld a,$76
 	out (4),a		; standard int clock
-.warn "Page mask is questionable. Fix if using Flash Debugger"
-	ld a,$7C		;the hardware will mask this if needed.. but Flash Debugger won't.  F'in TI.
+.warn "Page mask is hard-coded.  Fix for anything non-83PBE."
+	ld a,$1C
 	out (6),a
 _StackInit:	    ;Set up the stack before we can call anything
 	ld sp,0

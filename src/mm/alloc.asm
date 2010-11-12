@@ -77,8 +77,10 @@ peekAllocStack:
 	rst rLDHLIND    ;Ptr
 	ret
 _nothing:
-    ;HL is already allocStackBegin
-	ld de,0
+;Nothing allocated, so it's a 0-byte block at 0x8000
+    ld hl,08000h
+	ld d,l
+    ld e,l
 	ret
 .endmodule
 
@@ -150,13 +152,15 @@ _readFromBlock .EQU OSRAM+2     ;ditto
 _copySize .EQU OSRAM+4          ;remaining size of ""
 _oldVarAddr .EQU OSRAM+6        ;Initial location of sought variable (pre-move)
 _oldVarVAT .EQU OSRAM+8         ;Target var's VAT pointer
-
+.fail "Debug me!"
     ld (_writeToBlock),hl
 _allocateBlock:
 ;error checking
     call freeStackSpace
 ;Needs 128 byte buffer, 1 word for any ISR, 4 words scrap, and 1 word safety-net
-    ld hl,128+12
+    ld l,c
+    ld h,b
+    ld bc,128+12
     or a
     sbc hl,bc
     ErrorOutC(eMemory,eMem_OutOfStack)
@@ -225,9 +229,44 @@ _moveComplete:  ;update this var's VAT entry
     ld (hl),e	;lsb of address
 _fixVAT:    ;update the VAT entries of everything in user memory
     ld hl,VAT_begin
+    ld bc,(_oldVarAddr)
 _fixLoop:
-.warn "VAT fixup in allocVar needs implementing"
-    ;TODO: eep
+    ld de,(VATEnd)
+    rst rCPHLDE
+    jr z,_done      ;Fall out after checking all of VAT
+    dec hl
+    xor a
+    cp (hl)
+    dec hl          ;HL->address
+    ld d,(hl)
+    dec hl          ;..address LSB
+    ld e,(hl)
+    jr nz,_noFixup  ;Skip entry if not in RAM
+    ex de,hl        ;DE->VAT, HL=var address
+    push hl
+     or a
+     sbc hl,bc      ;Compare address against old location of freshly allocated var
+     pop hl
+    ex de,hl        ;HL->VAT, DE=var addr
+    jr nc,_noFixup  ;Fine if var is above the one we moved
+;No good, need to update the location since this var shifted
+    push hl
+     push de
+      call peekAllocStack
+      ld l,e
+      ld h,d        ;HL=size of block which moved
+      pop de
+     add hl,de      ;Fixed address of current var
+     ex de,hl
+     pop hl         ;HL->VAT, DE=fixed var addr
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    dec hl
+_noFixup:           ;Location record doesn't need fixup/go to next
+    ld de,-11       ;skip name to hit next entry
+    add hl,de
+    jr _fixVAT
 _done:
 	call peekAllocStack
 	ret			;finished!!

@@ -81,7 +81,7 @@
 ;Errors:
 ; eMem_OutOfRAM - not enough free RAM to create variable
 createVar:
-;TODO: test me
+.warn "Off-by-one needs fixing-- airspace between (VATEnd) and user memory"
 	push hl		;save var size
 	 call getFreeRAM
 	pop de
@@ -113,7 +113,7 @@ _mkVAT:
 	 ld a,b
 	 or c		;if the size to copy is 0, we would lddr FFFF bytes..
 	 jr z,_lddrSkip
-	 lddr		;copy the data block down by 14 bytes, making room for the new VAT entry
+	 ldir		;copy the data block down by 14 bytes, making room for the new VAT entry
 _lddrSkip:
 	 ld hl,(vatEnd)
 	 ld de,-14
