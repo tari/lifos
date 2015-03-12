@@ -1,0 +1,1 @@
+Designed with the programmer in mind, LIFOS uses a unique memory allocation system to allow programmers more simplicity when managing contents of memory, as well as a near-doubling of the permissible size of executable code in RAM.
